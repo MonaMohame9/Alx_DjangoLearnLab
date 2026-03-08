@@ -10,8 +10,6 @@
     <ul>
         {% for book in library.books.all %}
         <li>{{ book.title }} by {{ book.author.name }}</li>
-        {% empty %}
-        <li>No books in this library.</li>
         {% endfor %}
     </ul>
 </body>

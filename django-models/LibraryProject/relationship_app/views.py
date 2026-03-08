@@ -1,10 +1,10 @@
-
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render
 from django.views.generic.detail import DetailView
 from .models import Book, Library
-# Create your views here.
+
+
 def list_books(request):
-    books = Book.objects.select_related('author').all()
+    books = Book.objects.all()
     return render(request, 'relationship_app/list_books.html', {'books': books})
 
 
