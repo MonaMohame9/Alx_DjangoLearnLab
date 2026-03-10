@@ -1,52 +1,27 @@
-from django.db import models
 from django.conf import settings
-
-# Create your models here.
-
-
+from django.db import models
 
 User = settings.AUTH_USER_MODEL
 
 
-class Post(models.Model):
+class Like(models.Model):
 
-    author = models.ForeignKey(
+    user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name="posts"
+        related_name="likes"
     )
-
-    title = models.CharField(max_length=255)
-
-    content = models.TextField()
-
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return self.title
-
-
-class Comment(models.Model):
 
     post = models.ForeignKey(
-        Post,
+        "Post",
         on_delete=models.CASCADE,
-        related_name="comments"
+        related_name="likes"
     )
-
-    author = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name="comments"
-    )
-
-    content = models.TextField()
 
     created_at = models.DateTimeField(auto_now_add=True)
 
-    updated_at = models.DateTimeField(auto_now=True)
+    class Meta:
+        unique_together = ("user", "post")
 
     def __str__(self):
-        return f"Comment by {self.author}"
+        return f"{self.user} liked {self.post}"

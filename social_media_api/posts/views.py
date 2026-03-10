@@ -1,19 +1,60 @@
-from rest_framework import generics, permissions
+from rest_framework import generics, permissions, status
 from rest_framework.response import Response
-from .models import Post
-from .serializers import PostSerializer
+from django.shortcuts import get_object_or_404
+from django.contrib.contenttypes.models import ContentType
+
+from .models import Post, Like
+from notifications.models import Notification
 
 
-class FeedView(generics.GenericAPIView):
+class LikePostView(generics.GenericAPIView):
 
     permission_classes = [permissions.IsAuthenticated]
 
-    def get(self, request):
+    def post(self, request, pk):
 
-        following_users = request.user.following.all()
+        post = get_object_or_404(Post, pk=pk)
 
-        posts = Post.objects.filter(author__in=following_users).order_by("-created_at")
+        like, created = Like.objects.get_or_create(
+            user=request.user,
+            post=post
+        )
 
-        serializer = PostSerializer(posts, many=True)
+        if not created:
+            return Response(
+                {"message": "You already liked this post"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-        return Response(serializer.data)
+        Notification.objects.create(
+            recipient=post.author,
+            actor=request.user,
+            verb="liked your post",
+            content_type=ContentType.objects.get_for_model(post),
+            object_id=post.id
+        )
+
+        return Response({"message": "Post liked"})
+
+
+class UnlikePostView(generics.GenericAPIView):
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+
+        post = get_object_or_404(Post, pk=pk)
+
+        like = Like.objects.filter(
+            user=request.user,
+            post=post
+        )
+
+        if like.exists():
+            like.delete()
+            return Response({"message": "Post unliked"})
+
+        return Response(
+            {"error": "You have not liked this post"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
