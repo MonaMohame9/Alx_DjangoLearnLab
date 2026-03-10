@@ -1,20 +1,19 @@
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework import generics, permissions
 from rest_framework.response import Response
 from .models import Post
 from .serializers import PostSerializer
 
 
-@api_view(["GET"])
-@permission_classes([IsAuthenticated])
-def feed(request):
+class FeedView(generics.GenericAPIView):
 
-    following_users = request.user.following.all()
+    permission_classes = [permissions.IsAuthenticated]
 
-    posts = Post.objects.filter(
-        author__in=following_users
-    ).order_by("-created_at")
+    def get(self, request):
 
-    serializer = PostSerializer(posts, many=True)
+        following_users = request.user.following.all()
 
-    return Response(serializer.data)
+        posts = Post.objects.filter(author__in=following_users).order_by("-created_at")
+
+        serializer = PostSerializer(posts, many=True)
+
+        return Response(serializer.data)
